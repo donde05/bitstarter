@@ -8,10 +8,10 @@ app.get('/', function(request, response) {
 });
 */
 
-var filecontent =  fs.readFileSync('index.html', 'utf8');
+//var filecontent =  fs.readFileSync('index.html', 'utf8');
 
 app.get('/', function(request, response) {
-  response.send(filecontent);
+  response.send(fs.readFileSync('index.html', 'utf8'));
 });
 
 var port = process.env.PORT || 5000;
