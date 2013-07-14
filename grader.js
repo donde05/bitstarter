@@ -22,10 +22,17 @@ References:
 */
 
 var fs = require('fs');
+var util = require('util');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var rest =require('restler');
+//neu
+
+    
+
+
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -36,7 +43,11 @@ var assertFileExists = function(infile) {
     return instr;
 };
 
-var cheerioHtmlFile = function(htmlfile) {
+var cheerioHtmlFile = function(url) {
+    return cheerio.load(url);
+};
+
+var cheerioHtmlFile1 = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
 };
 
@@ -44,8 +55,9 @@ var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
+// noch neuer
 var checkHtmlFile = function(htmlfile, checksfile) {
-    $ = cheerioHtmlFile(htmlfile);
+    $ = cheerioHtmlFile1(htmlfile);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
@@ -54,6 +66,21 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     }
     return out;
 };
+
+var restlerzeug = function (url){
+    rest.get(url).on('complete', function(result ) {
+    var checksfile = CHECKSFILE_DEFAULT;
+    $ = cheerioHtmlFile(result);
+    var checks = loadChecks(checksfile).sort();
+    var out = {};
+    for(var ii in checks) {
+        var present = $(checks[ii]).length > 0;
+        out[checks[ii]] = present;
+    }
+    console.log(JSON.stringify(out, null,4));
+    return JSON.stringify(out, null,4); })
+       };
+
 
 var clone = function(fn) {
     // Workaround for commander.js issue.
@@ -65,11 +92,18 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url <url>', 'Link of site to check')
         .parse(process.argv);
+    if (typeof program.url != 'undefined'){
+    var checkJson = restlerzeug(program.url);
+    }
+
+    else if (typeof program.file != 'undefined'){
     var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
-} else {
+    //console.log(checkJson);
+}}
+  else {
     exports.checkHtmlFile = checkHtmlFile;
 }
-
